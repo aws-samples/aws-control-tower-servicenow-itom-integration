@@ -1,0 +1,116 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  CloudFormation stack for configuring AWS account in ServiceNow for ServiceNow discovery
+Parameters:
+  pServiceNowDiscoveryRole:
+    Description: Role name for ServiceNow discovery
+    Default: servicenow-discovery
+    Type: String
+  pServiceNowMasterIAMUser:
+    Description: User name for master account IAM user for ServiceNow discovery
+    Default: servicenow-discovery-master-user
+    Type: String
+  pServiceNowConfigFunctionName:
+    Description: ServiceNow discovery setup Lambda function
+    Default: ServiceNowAcctSetupHandler
+    Type: String
+  pMasterAccountId:
+    Description: Control Tower organization master account
+    Type: String
+  pExternalId:
+    Description: IAM Role External ID
+    Type: String
+    NoEcho: true
+  pEnableCloudWatchAlarmIntegration:
+    Description: Enable CloudWatch Alarm to ServiceNow integration
+    Type: String
+    AllowedValues:
+      - 'yes'
+      - 'no'
+    Default: 'no'
+  pServiceNowUrl:
+    Description: ServiceNow Endpoint URL
+    Type: String
+  pServiceNowEventUserName:
+    Description: ServiceNow Event API User
+    Type: String
+    NoEcho: true
+  pServiceNowEventUserPassword:
+    Description: ServiceNow Event API User Password
+    Type: String
+    NoEcho: true
+
+Conditions:
+  cEnableCloudWatchAlarmIntegration:
+    Fn::Equals:
+      - !Ref pEnableCloudWatchAlarmIntegration
+      - 'yes'
+
+Resources:
+  rServiceNowDiscoveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${pMasterAccountId}:user/${pServiceNowMasterIAMUser}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref pExternalId
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+      RoleName: !Ref pServiceNowDiscoveryRole
+
+  rServiceNowDiscoverySetupResource:
+    DependsOn:
+      - rServiceNowDiscoveryRole
+    Type: Custom::ServiceNowDiscoverySetup
+    Properties:
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${pMasterAccountId}:function:${pServiceNowConfigFunctionName}'
+      AccountId: !Ref "AWS::AccountId"
+
+  rCloudWatchAlertSNSTopic:
+    Type: AWS::SNS::Topic
+    Condition: cEnableCloudWatchAlarmIntegration
+    Properties:
+      DisplayName: CloudWatch Alert ServiceNow Integration
+      TopicName: 'cloudwatch-alert-servicenow-intg'
+
+  rCloudWatchAlertSNSTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Condition: cEnableCloudWatchAlarmIntegration
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowAccessForCloudWatch
+            Effect: Allow
+            Principal:
+              Service: "cloudwatch.amazonaws.com"
+            Action: sns:Publish
+            Resource: !Ref rCloudWatchAlertSNSTopic
+            Condition:
+              StringEquals:
+                AWS:SourceOwner:
+                  - !Ref AWS::AccountId
+      Topics:
+        - !Ref rCloudWatchAlertSNSTopic
+
+  rServiceNowEventMgmtSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: cEnableCloudWatchAlarmIntegration
+    Properties:
+      Endpoint:
+        !Sub 'https://${pServiceNowEventUserName}:${pServiceNowEventUserPassword}@${pServiceNowUrl}/api/global/em/inbound_event?source=AWS'
+      Protocol: https
+      TopicArn: !Ref rCloudWatchAlertSNSTopic
+
+Outputs:
+  oServiceNowEventMgmtTopic:
+    Condition: cEnableCloudWatchAlarmIntegration
+    Value: !Ref rCloudWatchAlertSNSTopic

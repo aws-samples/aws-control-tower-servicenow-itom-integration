@@ -1,0 +1,406 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:  Setup Components for automating servicenow provisioning using Control Tower Life cycle events
+
+Parameters:
+  pConfigureExistingAccounts:
+    Description: Configure Existing Accounts in ServiceNow
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+  pServiceNowAPIUserName:
+    Description: Username for ServiceNow User with access to ServiceNow REST API
+    Type: String
+    NoEcho: true
+  pServiceNowAPIUserPassword:
+    Description: Password for ServiceNow User with access to ServiceNow REST API
+    Type: String
+    NoEcho: true
+  pServiceNowCloudWatchAlertIntegration:
+    Description: Enable CloudWatch alert integration with ServiceNow
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: true
+  pServiceNowUrl:
+    Description: ServiceNow Endpoint URL
+    Type: String
+  pSolutionS3Bucket:
+    Description: S3 Bucket name for ServiceNow Setup cloudformation template
+    Type: String
+  pOrganizationUnitsToConfigure:
+    Description: Id(s) of Organization Units to configure in ServiceNow. Separate multiple values by using comma. Leaving this blank will configure all active accounts in Organization in ServiceNow
+    Type: String
+
+Mappings: 
+  LambdaLayerMap: 
+    ap-northeast:
+      "ARN": "arn:aws:lambda:ap-northeast-1:249908578461:layer:AWSLambda-Python-AWS-SDK:4"
+    us-east-1:
+      "ARN": "arn:aws:lambda:us-east-1:668099181075:layer:AWSLambda-Python-AWS-SDK:4"
+    ap-southeast-1:
+      "ARN": "arn:aws:lambda:ap-southeast-1:468957933125:layer:AWSLambda-Python-AWS-SDK:4"
+    eu-west-1:
+      "ARN": "arn:aws:lambda:eu-west-1:399891621064:layer:AWSLambda-Python-AWS-SDK:4"
+    us-west-1:
+      "ARN": "arn:aws:lambda:us-west-1:325793726646:layer:AWSLambda-Python-AWS-SDK:4"
+    ap-east-1:
+      "ARN": "arn:aws:lambda:ap-east-1:118857876118:layer:AWSLambda-Python-AWS-SDK:4"
+    ap-northeast-2:
+      "ARN": "arn:aws:lambda:ap-northeast-2:296580773974:layer:AWSLambda-Python-AWS-SDK:4"
+    ap-northeast-3:
+      "ARN": "arn:aws:lambda:ap-northeast-3:961244031340:layer:AWSLambda-Python-AWS-SDK:4"
+    ap-south-1:
+      "ARN": "arn:aws:lambda:ap-south-1:631267018583:layer:AWSLambda-Python-AWS-SDK:4"
+    ap-southeast-2:
+      "ARN": "arn:aws:lambda:ap-southeast-2:817496625479:layer:AWSLambda-Python-AWS-SDK:4"
+    ca-central-1:
+      "ARN": "arn:aws:lambda:ca-central-1:778625758767:layer:AWSLambda-Python-AWS-SDK:4"
+    eu-central-1:
+      "ARN": "arn:aws:lambda:eu-central-1:292169987271:layer:AWSLambda-Python-AWS-SDK:4"
+    eu-north-1:
+      "ARN": "arn:aws:lambda:eu-north-1:642425348156:layer:AWSLambda-Python-AWS-SDK:4"
+    eu-west-2:
+      "ARN": "arn:aws:lambda:eu-west-2:142628438157:layer:AWSLambda-Python-AWS-SDK:4"
+    eu-west-3:
+      "ARN": "arn:aws:lambda:eu-west-3:959311844005:layer:AWSLambda-Python-AWS-SDK:4"
+    sa-east-1:
+      "ARN": "arn:aws:lambda:sa-east-1:640010853179:layer:AWSLambda-Python-AWS-SDK:4"
+    us-east-2:
+      "ARN": "arn:aws:lambda:us-east-2:259788987135:layer:AWSLambda-Python-AWS-SDK:4"
+    us-west-2:
+      "ARN": "aws:lambda:us-west-2:420165488524:layer:AWSLambda-Python-AWS-SDK:5"
+    cn-north-1:
+      "ARN": "arn:aws-cn:lambda:cn-north-1:683298794825:layer:AWSLambda-Python-AWS-SDK:4"
+    cn-northwest-1:
+      "ARN": "arn:aws-cn:lambda:cn-northwest-1:382066503313:layer:AWSLambda-Python-AWS-SDK:4"
+    us-gov-west-1:
+      "ARN": "arn:aws-us-gov:lambda:us-gov-west-1:556739011827:layer:AWSLambda-Python-AWS-SDK:4"
+    us-gov-east-1:
+      "ARN": "arn:aws-us-gov:lambda:us-gov-east-1:138526772879:layer:AWSLambda-Python-AWS-SDK:4"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - 
+        Label:
+          default: ServiceNow Instance Settings
+        Parameters:
+          - pServiceNowUrl
+          - pServiceNowAPIUserName
+          - pServiceNowAPIUserPassword
+      -
+        Label:
+          default: ServiceNow StackSet settings
+        Parameters:
+          - pSolutionS3Bucket
+          - pConfigureExistingAccounts
+          - pOrganizationUnitsToConfigure
+          - pServiceNowCloudWatchAlertIntegration
+
+Conditions:
+  cConfigureExistingAccounts: !Equals [!Ref 'pConfigureExistingAccounts', 'true']
+
+Resources: 
+  rAccountCreationEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Monitor Control Tower Account creation event for ServiceNow configuration
+      EventPattern:
+        source: 
+          - "aws.controltower"
+        detail-type:
+          - "AWS Service Event via CloudTrail"
+        detail:
+          eventName:
+            - "CreateManagedAccount"
+      State: "ENABLED"
+      Targets:
+      - 
+        Arn: !GetAtt rServiceNowStackSetHandler.Arn
+        Id: NewAccountServiceNowSetup
+  
+  rKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Key used to encrypt servicenow user secret
+      Enabled: true
+      KeyPolicy:
+        Id: servicenow-user-key-policy
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowFullControl
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+      EnableKeyRotation: true
+
+  rKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/servicenow/user/
+      TargetKeyId: !Ref rKMSKey
+
+  rServiceNowUser:
+    Type: AWS::IAM::User
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F10
+            reason: "This is single IAM user needed for programatic access and does not require a group"
+          - id: F2000
+            reason: "This is single IAM user needed for programatic access and does not require a group"
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+      Policies:
+        - PolicyName: "AssumeRoleAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "sts:AssumeRole"
+                Resource: "arn:aws:iam::*:role/servicenow-discovery"
+      UserName: 'servicenow-discovery-master-user'
+
+  rServiceNowUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref rServiceNowUser
+
+  rServiceNowUserSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: Secrety Key for servicenow user
+      Name: /servicenow/discovery/credential
+      KmsKeyId: !Ref rKMSKey
+      SecretString: 
+        !Sub 
+          - '{"ACCESS_KEY_ID":"${rServiceNowUserAccessKey}", "SECRET_ACCESS_KEY":"${ACCESS_KEY}"}'
+          - { ACCESS_KEY: !GetAtt rServiceNowUserAccessKey.SecretAccessKey }  
+
+  rServiceNowAPISecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: SNOW creds for Change order lookup
+      Name: '/servicenow/api-credentials'
+      KmsKeyId: !Ref rKMSKey
+      SecretString: !Sub '{"username": "${pServiceNowAPIUserName}", "password": "${pServiceNowAPIUserPassword}"}'
+
+  rServiceNowInitialSetup:
+    Type: Custom::rServiceNowInitialSetup
+    Properties: 
+      ServiceToken: !GetAtt rServiceNowAcctSetupHandler.Arn
+      PerformInitialSetup: 'true'
+
+  rConfigureExistingAccounts:
+    Condition: cConfigureExistingAccounts
+    DependsOn:
+      - rServiceNowInitialSetup
+    Type: Custom::ConfigureExistingAccounts
+    Properties: 
+      ServiceToken: !GetAtt rServiceNowStackSetHandler.Arn
+      ConfigureExistingAccounts: !Ref pConfigureExistingAccounts
+      OrganizationUnitsToConfigure: !Ref pOrganizationUnitsToConfigure
+
+  rServiceNowAcctSetupHandlerRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Suppresing warning related to allowing * resource for organizations:DescribeAccount API"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: AccessToRetrieveSecretfromSecretManager
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: 
+                - !Ref rServiceNowAPISecret
+                - !Ref rServiceNowUserSecret
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+              Resource:
+                - !GetAtt rKMSKey.Arn
+        - PolicyName: AccessToAWSOrganization
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - organizations:DescribeAccount
+              Resource: "*"
+
+  rServiceNowAcctSetupHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref pSolutionS3Bucket
+        S3Key: 'Controltower-servicenow-integration/lambda-zip/servicenow-acct-setup-handler.zip'
+      Description: Function to configure AWS account in ServiceNow for discovery
+      Environment:
+        Variables:
+          ASSUME_ROLE_EXTERNAL_ID: 'QwhXUKj2FkYfmbGH'
+          MEMBER_ACCOUNT_ASSUME_ROLE: 'servicenow-discovery'
+          SERVICENOW_ENDPOINT: !Ref pServiceNowUrl
+          SERVICENOW_CREDS: !Ref rServiceNowAPISecret
+          PARENT_ACCOUNT_ID: !Ref AWS::AccountId
+          DISCOVERY_SCHEDULE: 'AWSDiscoverySchedule'
+          DISCOVERY_REGION: !Ref AWS::Region
+          MASTER_ACCOUNT_CREDENTIALS: !Ref rServiceNowUserSecret
+      FunctionName: ServiceNowAcctSetupHandler
+      Handler: main.lambda_handler
+      Layers:
+        - !FindInMap
+            - LambdaLayerMap
+            - !Ref 'AWS::Region'
+            - "ARN"
+      MemorySize: 128
+      Role: !GetAtt rServiceNowAcctSetupHandlerRole.Arn
+      Runtime: python3.7
+      Timeout: 360
+
+  rServiceNowAcctSetupHandlerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt rServiceNowAcctSetupHandler.Arn
+      Action: lambda:InvokeFunction
+      Principal: cloudformation.amazonaws.com
+
+  rServiceNowStackSetHandlerRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Suppresing warning related to allowing * resource for organizations:DescribeAccount API"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateStackSet
+                  - cloudformation:DescribeStackSet*
+                  - cloudformation:ListStackSet*
+                  - cloudformation:CreateStackInstances
+                  - cloudformation:ListStackInstances
+                  - cloudformation:DeleteStackInstances
+                  - cloudformation:DeleteStackSet
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/ServiceNowConfigurationStackSet*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${pSolutionS3Bucket}'
+                  - !Sub 'arn:aws:s3:::${pSolutionS3Bucket}/*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${pSolutionS3Bucket}/*'
+              - Effect: Allow
+                Action:
+                  - lambda:AddPermission
+                Resource: 
+                  - !GetAtt rServiceNowAcctSetupHandler.Arn
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/service-role/AWSControlTowerStackSetRole"
+              - Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: '*'
+          PolicyName: StackSetFunctionPermissions
+        - PolicyName: AccessToRetrieveSecretfromSecretManager
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - secretsmanager:GetSecretValue
+              Resource: !Ref rServiceNowAPISecret
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+              Resource:
+                - !GetAtt rKMSKey.Arn
+        - PolicyName: AccessToAWSOrganization
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - organizations:ListAccounts
+                - organizations:ListAccountsForParent
+                - organizations:ListChildren
+              Resource: "*"
+  
+  rServiceNowStackSetHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Handles control tower new account creation life cycle event to create or update ServiceNow provisioning stack set
+      FunctionName: ServiceNowStackSetHandler
+      Handler: main.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt rServiceNowStackSetHandlerRole.Arn
+      Runtime: python3.7
+      Timeout: 900
+      Environment:
+        Variables:
+          StackSetName: 'ServiceNowConfigurationStackSet'
+          StackSetRegions: !Ref AWS::Region
+          StackSetDescription: "Stack Set for ServiceNow configuration"
+          StackTemplateBucket: !Ref pSolutionS3Bucket
+          StackTemplatePrefix: 'Controltower-servicenow-integration/cloudformation/templates/servicenow-setup.yaml'
+          ServiceNowConfigFunctionName: !Ref rServiceNowAcctSetupHandler
+          ServiceNowDiscoveryRoleExternalId: 'QwhXUKj2FkYfmbGH'
+          ServiceNowCloudWatchAlertIntegration: !Ref pServiceNowCloudWatchAlertIntegration
+          ServiceNowEndpointUrl: !Ref pServiceNowUrl
+          ServiceNowCreds: !Ref rServiceNowAPISecret
+      Code:
+        S3Bucket: !Ref pSolutionS3Bucket
+        S3Key: 'Controltower-servicenow-integration/lambda-zip/servicenow-stack-set-handler.zip'
+
+  rServiceNowStackSetHandlerPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref rServiceNowStackSetHandler
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt rAccountCreationEventRule.Arn

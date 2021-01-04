@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This CloudFormation template creates a Subscription to the AWS Config event streaming SNS topic 
+ to send config events to ServiceNow
+Parameters: 
+  pServnowUserName:
+    Description: Name/ID of ServiceNow user with access to process AWS Config event
+    Type: String
+    NoEcho: true
+  pServnowUserPassword:
+    Description: Password of ServiceNow user with access to process AWS Config event
+    Type: String
+    NoEcho: true
+  pServiceNowEndpoint:
+    Description: ServiceNow endpoint URL (without the initial https)
+    Type: String
+  pAWSConfigSNSTopic:
+    Description: SNS topic name for Streaming AWS Config events to ServiceNow
+    Type: String
+    Default: aws-controltower-AllConfigNotifications
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: AWS Config Event Stream Settings
+        Parameters:
+          - pAWSConfigSNSTopic
+      - 
+        Label:
+          default: ServiceNow Instance Settings
+        Parameters:
+          - pServiceNowEndpoint
+          - pServnowUserName
+          - pServnowUserPassword
+Resources: 
+  ServiceNowConfigEventSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Sub https://${pServnowUserName}:${pServnowUserPassword}@${pServiceNowEndpoint}/api/now/cloud_event
+      Protocol: https
+      TopicArn: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pAWSConfigSNSTopic}'
