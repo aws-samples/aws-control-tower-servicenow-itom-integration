@@ -48,7 +48,7 @@ Before deploying the solution, you must gather the following information:
 - A ServiceNow MID Server to perform discovery in the AWS environment. You can use an existing MID server as long as it has network connectivity to AWS API endpoints \*.amazonaws.com. If you do not have a MID Server, you can set one up using the instruction [here](https://docs.servicenow.com/bundle/orlando-it-operations-management/page/product/cloud-management-v2-setup/task/aws-setup-mid-server-cloud-mgt.html)
 - Credentials of a ServiceNow user that has permissions to make REST API calls to ServiceNow. This user needs to have permissions to access ServiceNow REST API, specifically the Table API, Discovery API and cloud management APIs as well as ServiceNow cloud event integration (if enabling CloudWatch Alert integration). If you don&#39;t have a user provisioned, you can create one by following the ServiceNow documentation [here](https://docs.servicenow.com/bundle/madrid-application-development/page/integrate/inbound-rest/concept/c_GettingStartedWithREST.html).
 - An [Amazon S3](http://aws.amazon.com/s3) bucket to host the Lambda package and to upload the CloudFormation template for ServiceNow configuration in new accounts. Identify or [create a bucket](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-bucket.html), and take note of that bucket&#39;s name. The Amazon S3 bucket must be in the same Region in which you plan launch AWS CloudFormation, and should be a [Region supported by Control Tower](https://aws.amazon.com/controltower/faqs/#Availability).
-- Clone [this](https://code.amazon.com/packages/Controltower-servicenow-integration/trees/mainline) repo or download the zip file and unzip the contents on your local machine. This repo contains a CloudFormation template that creates all the necessary components for the solution.
+- Clone [this](https://github.com/aws-samples/aws-control-tower-servicenow-itom-integration) repo or download the zip file and unzip the contents on your local machine. This repo contains a CloudFormation template that creates all the necessary components for the solution.
 
 ## Solution deployment:
 
@@ -62,9 +62,7 @@ In this solution we provide three [AWS CloudFormation](https://aws.amazon.com/cl
 ### Packaging the Lambda code
 In this solution, we provide you with sample code for Lambda function that configures AWS account in ServiceNow. You can also clone the GitHub repo to tailor the code to your needs and contribute. The Lambda function is written in Python, but is too large to be included in-line in the CloudFormation template. To deploy it, you must package it.
 
-Download the code [here](https://code.amazon.com/packages/Controltower-servicenow-integration/trees/mainline) or clone the repo from GitHub. Decompress if you downloaded the ZIP version.
-Open a command prompt.
-Navigate to the folder into which you extracted the zip file or cloned the repo and run 'cd src' to change to the subfolder. There is a package script in the folder that creates a zipped package for the two Lambda functions provided as part of this solution. Depending on your operating system run the script as below.
+Download the code or clone this repo from GitHub. Decompress if you downloaded the ZIP version. Open a command prompt. Navigate to the folder into which you extracted the zip file or cloned the repo and run 'cd src' to change to the subfolder. There is a package script in the folder that creates a zipped package for the two Lambda functions provided as part of this solution. Depending on your operating system run the script as below.
 
 Bash  
 `./package.sh`
@@ -72,13 +70,13 @@ Bash
 PowerShell  
 `./package.ps1`
 
-The package script creates zip for the two lambda functions used by the solution and copies them under lambda-zip folder. After running the above script verify that you see the zip files created under lambda-zip folder. Then follow the step below to deploy the solution.
+The package script creates zip for the two lambda functions used by the solution and copies them under lambda-zip folder. After running the above script verify that you see the zip files created under lambda-zip folder. Then follow the steps below to deploy the solution.
 
 ### Steps for deploying the solution:
 
 **Step1)** If you haven&#39;t already, please collect the information described in the pre-requisite section.
 
-**Step 2)** If you haven&#39;t already, clone [this](https://code.amazon.com/packages/Controltower-servicenow-integration/trees/mainline) repo or download the zip file and unzip to local folder. Package the lambda as per instructions in the previous step. Then upload the Controltower-servicenow-integration folder to the S3 bucket that you identified in the pre-requisite step. 
+**Step 2)** If you haven&#39;t already, clone this repo or download the zip file and unzip to local folder. Package the lambda as per instructions in the previous step. Then upload the Controltower-servicenow-integration folder to the S3 bucket that you identified in the pre-requisite step. 
 
 **Step 3)** Launch the AWS CloudFormation stack
 
@@ -126,13 +124,9 @@ After the stack has completed deploying in the Control Tower master account, sig
 
 1. **Service Accounts**: In ServiceNow navigate to Service Accounts and you will see the Control Tower master and the member accounts configured in the ServiceNow for ServiceNow cloud discovery and cloud management
 2. **Discovery Schedule**: In ServiceNow, navigate to discovery schedule and validate that you see a discovery schedule with name AWSDiscoverySchedule. Select the schedule and click on &quot;Discover Now&quot;
-3. **Discovery Results**: In ServiceNow navigate to Discovery Home then click on &quot;View Schedules&quot; to see the summary of AWS resources from member account that discovery process populated in CMDB. You may have to wait a little bit for the discovery schedule to finish its execution before seeing the resources.
-
-To look up resources in specific account, navigate to Service Accounts then select Sandbox1 and select the AWS region (us-east-1) configured for that account. This brings up a page like below where I can see AWS resources in that account that the ServiceNow discovery process populated in the CMDB.
-4. **AWS Config integration with ServiceNow**:
-If you had deployed the solutions aws-config-servicenow-integration stack in Audit account then the aggregated AWS config data from your AWS Control Tower accounts is sent to ServiceNow. This enables ServiceNow to update the CMDB in real time. In order to test this integration, I create another test EC2 instance in my Sandbox1 AWS account and name it as WebServer2. I then log into my ServiceNow instance and navigate to Service Accounts, select Sandbox1 account where I had created the EC2 instance and scroll and select the us-east-1 as the data center for that account. This brings me to a page as seen below where I can see the newly created EC2 instance in the Virtual Machines tab.
-5. **CloudWatch alert integration**:
-If you had deployed the solution&#39;s main stack with the option to enable CloudWatch alert integration with ServiceNow, then an SNS topic is created in each member account with subscription to send CloudWatch Alarms to ServiceNow for incident management. The name of this SNS topic is &#39;[cloudwatch-alert-servicenow-intg](https://console.aws.amazon.com/sns/v3/home?region=us-east-1#/topic/arn:aws:sns:us-east-1:147463872011:cloudwatch-alert-servicenow-intg)&#39;. You can configure CloudWatch alarms to send the Alarm action to this SNS topic which will then trigger ServiceNow to create an incident.
+3. **Discovery Results**: In ServiceNow navigate to Discovery Home then click on &quot;View Schedules&quot; to see the summary of AWS resources from member account that discovery process populated in CMDB. You may have to wait a little bit for the discovery schedule to finish its execution before seeing the resources. To look up resources in specific account, navigate to Service Accounts then select Sandbox1 and select the AWS region (us-east-1) configured for that account. This brings up a page like below where I can see AWS resources in that account that the ServiceNow discovery process populated in the CMDB.
+4. **AWS Config integration with ServiceNow**: If you had deployed the solutions aws-config-servicenow-integration stack in Audit account then the aggregated AWS config data from your AWS Control Tower accounts is sent to ServiceNow. This enables ServiceNow to update the CMDB in real time. In order to test this integration, I create another test EC2 instance in my Sandbox1 AWS account and name it as WebServer2. I then log into my ServiceNow instance and navigate to Service Accounts, select Sandbox1 account where I had created the EC2 instance and scroll and select the us-east-1 as the data center for that account. This brings me to a page as seen below where I can see the newly created EC2 instance in the Virtual Machines tab.
+5. **CloudWatch alert integration**: If you had deployed the solution&#39;s main stack with the option to enable CloudWatch alert integration with ServiceNow, then an SNS topic is created in each member account with subscription to send CloudWatch Alarms to ServiceNow for incident management. The name of this SNS topic is &#39;cloudwatch-alert-servicenow-intg&#39;. You can configure CloudWatch alarms to send the Alarm action to this SNS topic which will then trigger ServiceNow to create an incident on receiving the CloudWatch alarm.
 
 ## Cleaning up
 
