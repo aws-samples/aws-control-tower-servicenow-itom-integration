@@ -258,7 +258,7 @@ Resources:
     Properties:
       Code:
         S3Bucket: !Ref pSolutionS3Bucket
-        S3Key: 'Controltower-servicenow-integration/lambda-zip/servicenow-acct-setup-handler.zip'
+        S3Key: 'aws-control-tower-servicenow-itom-integration/lambda-zip/servicenow-acct-setup-handler.zip'
       Description: Function to configure AWS account in ServiceNow for discovery
       Environment:
         Variables:
@@ -390,7 +390,7 @@ Resources:
           StackSetRegions: !Ref AWS::Region
           StackSetDescription: "Stack Set for ServiceNow configuration"
           StackTemplateBucket: !Ref pSolutionS3Bucket
-          StackTemplatePrefix: 'Controltower-servicenow-integration/cloudformation/templates/servicenow-setup.yaml'
+          StackTemplatePrefix: 'aws-control-tower-servicenow-itom-integration/cloudformation/templates/servicenow-setup.yaml'
           ServiceNowConfigFunctionName: !Ref rServiceNowAcctSetupHandler
           ServiceNowDiscoveryRoleExternalId: 'QwhXUKj2FkYfmbGH'
           ServiceNowCloudWatchAlertIntegration: !Ref pServiceNowCloudWatchAlertIntegration
@@ -398,7 +398,7 @@ Resources:
           ServiceNowCreds: !Ref rServiceNowAPISecret
       Code:
         S3Bucket: !Ref pSolutionS3Bucket
-        S3Key: 'Controltower-servicenow-integration/lambda-zip/servicenow-stack-set-handler.zip'
+        S3Key: 'aws-control-tower-servicenow-itom-integration/lambda-zip/servicenow-stack-set-handler.zip'
 
   rServiceNowStackSetHandlerPermissions:
     Type: AWS::Lambda::Permission

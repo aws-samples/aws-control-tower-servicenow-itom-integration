@@ -76,7 +76,7 @@ The package script creates zip for the two lambda functions used by the solution
 
 **Step1)** If you haven&#39;t already, please collect the information described in the pre-requisite section.
 
-**Step 2)** If you haven&#39;t already, clone this repo or download the zip file and unzip to local folder. Package the lambda as per instructions in the previous step. Then upload the Controltower-servicenow-integration folder to the S3 bucket that you identified in the pre-requisite step. 
+**Step 2)** If you haven&#39;t already, clone this repo or download the zip file and unzip to local folder. Package the lambda as per instructions in the previous step. Then upload the aws-control-tower-servicenow-itom-integration folder to the S3 bucket that you identified in the pre-requisite step. 
 
 **Step 3)** Launch the AWS CloudFormation stack
 
