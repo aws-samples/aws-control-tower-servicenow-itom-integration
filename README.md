@@ -130,10 +130,10 @@ After the stack has completed deploying in the Control Tower master account, sig
 
 ## Cleaning Up
 
-To clean up ServiceNow configuration as well as components deployed by the main AWS CloudFormation stack deployment, simply delete the main CloudFormation stack via the [AWS CloudFormation console](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) or the [command line](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-cli-deleting-stack.html). Deleting the CloudFormation stack triggers the process of removing the configuration of AWS accounts from ServiceNow including initial configuration done in ServiceNow for master account. Once you are done deleting the Solution&#39;s main CloudFormation stack from the Control Tower master account, login to the Audit account and delete the AWS Config ServiceNow integration stack. This will stop AWS Config data from being sent to ServiceNow
+To clean up ServiceNow configuration as well as components deployed by the main AWS CloudFormation stack deployment, simply delete the main CloudFormation stack via the [AWS CloudFormation console](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) or the [command line](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-cli-deleting-stack.html). Deleting the CloudFormation stack triggers the process of removing the configuration of AWS accounts from ServiceNow including initial configuration done in ServiceNow for master account. Once you are done deleting the Solution&#39;s main CloudFormation stack from the Control Tower master account, login to the Audit account and delete the AWS Config ServiceNow integration stack. This will stop AWS Config data from being sent to ServiceNow.
 
 # Security
-See [CONTRIBUTING](./CONTRIBUTING.md) for more information
+See [CONTRIBUTING](./CONTRIBUTING.md) for more information.
 
 # License
 This project is licensed under the MIT-0 License. See the LICENSE file.
