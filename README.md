@@ -19,7 +19,7 @@ Setting up ServiceNow Cloud discovery and/or Cloud Management for an AWS account
 2. AWS Account information added to Service account table
 3. Configure ServiceNow to discover data centers for the AWS account
 4. Configure ServiceNow&#39;s Cloud Discovery process for the desired data AWS regions
-5. Configuring AWS Config to send configuration change events to ServiceNow to update the CMDB in real time.
+5. Configuring AWS Config to send configuration change events to ServiceNow to update the CMDB in real time
 
 Once the ServiceNow Cloud Discovery process is enabled for an AWS account, the discovery process starts collecting AWS resource information in the CMDB. This information in CMDB can then be leveraged by ServiceNow&#39;s Operations management modules such as Change management, Event and Incident management to provide those capabilities for AWS environment.
 
@@ -29,13 +29,13 @@ This solution fully automates the provisioning of AWS account in ServiceNow to e
 
 Here is an overview of how the solution works:
 
-- The solutions main template performs the initial setup in ServiceNow and creates ServiceNowConfig [CloudFormation StackSet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html) to enable ServiceNow provisioning for member accounts in the AWS Control Tower environment.
+- The solutions main template performs the initial setup in ServiceNow and creates ServiceNowConfig [CloudFormation StackSet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html) to enable ServiceNow provisioning for member accounts in the AWS Control Tower environment
 - When a new AWS account is created through the Control Tower Account Factory, the Control Tower lifecycle event triggers the ServiceNowStackSetHandler lambda to run
-- The ServiceNowStackSetHandler lambda updates the ServiceNowConfig StackSet to start ServiceNow provisioning for the new account.
+- The ServiceNowStackSetHandler lambda updates the ServiceNowConfig StackSet to start ServiceNow provisioning for the new account
 - The ServiceNowConfig stack instance runs in the new account and triggers the ServiceNowConfigFunction lambda function to start provisioning of the AWS account in ServiceNow
-- [AWS Config](https://aws.amazon.com/config/) events for new account are aggregated in the Audit account and sent to ServiceNow. ServiceNow uses the event info to update the CMDB for resource configuration changes.
-- If [AWS CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html) integration is enabled, then the ServiceNowConfig stack creates an SNS topic with subscription to ServiceNow event management to enable sending CloudWatch alarms to ServiceNow for alert and incident management.
-- At a set schedule, ServiceNow performs discovery for AWS resources in the new account and populates its CMDB.
+- [AWS Config](https://aws.amazon.com/config/) events for new account are aggregated in the Audit account and sent to ServiceNow. ServiceNow uses the event info to update the CMDB for resource configuration changes
+- If [AWS CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html) integration is enabled, then the ServiceNowConfig stack creates an SNS topic with subscription to ServiceNow event management to enable sending CloudWatch alarms to ServiceNow for alert and incident management
+- At a set schedule, ServiceNow performs discovery for AWS resources in the new account and populates its CMDB
 
 
 ## Pre-requisites
@@ -46,9 +46,9 @@ Before deploying the solution, you must gather the following information:
 
 - The endpoint URL for your ServiceNow cloud instance. If you do not have a ServiceNow instance, you can request a developer instance through the ServiceNow developer [page](https://developer.servicenow.com/dev.do). Please ensure you have the ServiceNow Discovery, CloudManagement and Event management plugins activated on the ServiceNow instance
 - A ServiceNow MID Server to perform discovery in the AWS environment. You can use an existing MID server as long as it has network connectivity to AWS API endpoints \*.amazonaws.com. If you do not have a MID Server, you can set one up using the instruction [here](https://docs.servicenow.com/bundle/orlando-it-operations-management/page/product/cloud-management-v2-setup/task/aws-setup-mid-server-cloud-mgt.html)
-- Credentials of a ServiceNow user that has permissions to make REST API calls to ServiceNow. This user needs to have permissions to access ServiceNow REST API, specifically the Table API, Discovery API and cloud management APIs as well as ServiceNow cloud event integration (if enabling CloudWatch Alert integration). If you don&#39;t have a user provisioned, you can create one by following the ServiceNow documentation [here](https://docs.servicenow.com/bundle/madrid-application-development/page/integrate/inbound-rest/concept/c_GettingStartedWithREST.html).
-- An [Amazon S3](http://aws.amazon.com/s3) bucket to host the Lambda package and to upload the CloudFormation template for ServiceNow configuration in new accounts. Identify or [create a bucket](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-bucket.html), and take note of that bucket&#39;s name. The Amazon S3 bucket must be in the same Region in which you plan launch AWS CloudFormation, and should be a [Region supported by Control Tower](https://aws.amazon.com/controltower/faqs/#Availability).
-- Clone [this](https://github.com/aws-samples/aws-control-tower-servicenow-itom-integration) repo or download the zip file and unzip the contents on your local machine. This repo contains a CloudFormation template that creates all the necessary components for the solution.
+- Credentials of a ServiceNow user that has permissions to make REST API calls to ServiceNow. This user needs to have permissions to access ServiceNow REST API, specifically the Table API, Discovery API and cloud management APIs as well as ServiceNow cloud event integration (if enabling CloudWatch Alert integration). If you don&#39;t have a user provisioned, you can create one by following the ServiceNow documentation [here](https://docs.servicenow.com/bundle/madrid-application-development/page/integrate/inbound-rest/concept/c_GettingStartedWithREST.html)
+- An [Amazon S3](http://aws.amazon.com/s3) bucket to host the Lambda package and to upload the CloudFormation template for ServiceNow configuration in new accounts. Identify or [create a bucket](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-bucket.html), and take note of that bucket&#39;s name. The Amazon S3 bucket must be in the same Region in which you plan launch AWS CloudFormation, and should be a [Region supported by Control Tower](https://aws.amazon.com/controltower/faqs/#Availability)
+- Clone [this](https://github.com/aws-samples/aws-control-tower-servicenow-itom-integration) repo or download the zip file and unzip the contents on your local machine. This repo contains a CloudFormation template that creates all the necessary components for the solution
 
 ## Solution Deployment
 
@@ -74,9 +74,9 @@ The package script creates zip for the two lambda functions used by the solution
 
 ### Steps for deploying the solution
 
-**Step 1)** If you haven&#39;t already, please collect the information described in the pre-requisite section.
+**Step 1)** If you haven&#39;t already, please collect the information described in the pre-requisite section
 
-**Step 2)** If you haven&#39;t already, clone this repo or download the zip file and unzip to local folder. Package the lambda as per instructions in the previous step. Then upload the aws-control-tower-servicenow-itom-integration folder to the S3 bucket that you identified in the pre-requisite step. 
+**Step 2)** If you haven&#39;t already, clone this repo or download the zip file and unzip to local folder.Package the lambda as per instructions in the previous step. Then upload the aws-control-tower-servicenow-itom-integration folder to the S3 bucket that you identified in the pre-requisite step
 
 **Step 3)** Launch the AWS CloudFormation stack
 
@@ -113,17 +113,17 @@ Once you select Create stack, you can follow the process and view the status of 
 The master-account-setup.yaml CloudFormation template creates all the necessary components for the solution. This includes the following:
 
 - AWS [SecretsManager](https://aws.amazon.com/secrets-manager/) secret to store ServiceNow API User credentials
-- An [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) in the master account with ViewOnly access and ability to assume servicenow-discovery role in member account. This credential is configured in ServiceNow to enable ServiceNow to perform Cloud discovery in the master and the member accounts.
+- An [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) in the master account with ViewOnly access and ability to assume servicenow-discovery role in member account. This credential is configured in ServiceNow to enable ServiceNow to perform Cloud discovery in the master and the member accounts
 - AWS [SecretsManager](https://aws.amazon.com/secrets-manager/) secret to store the security credentials for the master account IAM User
 - AWS Lambda function (ServiceNowAcctSetupHandler) to enabling provisioning of master account as well as member account in ServiceNow for ServiceNow discovery
 - [AWS Lambda](https://aws.amazon.com/lambda/) function ([ServiceNowStackSetHandler](https://console.aws.amazon.com/lambda/home?region=us-east-1#functions/ServiceNowStackSetHandler)) to process Control Tower lifecycle event and provision the new account in ServiceNow using StackSets. This lambda function also provisions existing accounts in ServiceNow
 - [AWS CloudFormation](https://aws.amazon.com/cloudformation/#:~:text=AWS%20Cloud%E2%80%8BFormation&amp;text=AWS%20CloudFormation%20allows%20you%20to,AWS%20and%20third%20party%20resources.) custom resource to perform the initial setup in ServiceNow. This involves setting up ServiceNow with the master account credentials, creating discovery schedule, configuring discovery-role and configuring master account in ServiceNow
-- [AWS CloudFormation](https://aws.amazon.com/cloudformation/#:~:text=AWS%20Cloud%E2%80%8BFormation&amp;text=AWS%20CloudFormation%20allows%20you%20to,AWS%20and%20third%20party%20resources.) custom resource to create a AWS CloudFormation StackSet in Control Tower master account to configure existing and new member accounts in ServiceNow.
+- [AWS CloudFormation](https://aws.amazon.com/cloudformation/#:~:text=AWS%20Cloud%E2%80%8BFormation&amp;text=AWS%20CloudFormation%20allows%20you%20to,AWS%20and%20third%20party%20resources.) custom resource to create a AWS CloudFormation StackSet in Control Tower master account to configure existing and new member accounts in ServiceNow
 
 After the stack has completed deploying in the Control Tower master account, sign into your ServiceNow instance and validate the following
 
-1. **Service Accounts**: In ServiceNow navigate to Service Accounts and you will see the Control Tower master and the member accounts configured in the ServiceNow for ServiceNow cloud discovery and cloud management
-2. **Discovery Schedule**: In ServiceNow, navigate to discovery schedule and validate that you see a discovery schedule with name AWSDiscoverySchedule. Select the schedule and click on &quot;Discover Now&quot;
+1. **Service Accounts**: In ServiceNow navigate to Service Accounts and you will see the Control Tower master and the member accounts configured in the ServiceNow for ServiceNow cloud discovery and cloud management.
+2. **Discovery Schedule**: In ServiceNow, navigate to discovery schedule and validate that you see a discovery schedule with name AWSDiscoverySchedule. Select the schedule and click on &quot;Discover Now&quot;.
 3. **Discovery Results**: In ServiceNow navigate to Discovery Home then click on &quot;View Schedules&quot; to see the summary of AWS resources from member account that discovery process populated in CMDB. You may have to wait a little bit for the discovery schedule to finish its execution before seeing the resources. To look up resources in specific account, navigate to Service Accounts then select Sandbox1 and select the AWS region (us-east-1) configured for that account. This brings up a page like below where I can see AWS resources in that account that the ServiceNow discovery process populated in the CMDB.
 4. **AWS Config integration with ServiceNow**: If you had deployed the solutions aws-config-servicenow-integration stack in Audit account then the aggregated AWS config data from your AWS Control Tower accounts is sent to ServiceNow. This enables ServiceNow to update the CMDB in real time. In order to test this integration, I create another test EC2 instance in my Sandbox1 AWS account and name it as WebServer2. I then log into my ServiceNow instance and navigate to Service Accounts, select Sandbox1 account where I had created the EC2 instance and scroll and select the us-east-1 as the data center for that account. This brings me to a page as seen below where I can see the newly created EC2 instance in the Virtual Machines tab.
 5. **CloudWatch alert integration**: If you had deployed the solution&#39;s main stack with the option to enable CloudWatch alert integration with ServiceNow, then an SNS topic is created in each member account with subscription to send CloudWatch Alarms to ServiceNow for incident management. The name of this SNS topic is &#39;cloudwatch-alert-servicenow-intg&#39;. You can configure CloudWatch alarms to send the Alarm action to this SNS topic which will then trigger ServiceNow to create an incident on receiving the CloudWatch alarm.
