@@ -1,6 +1,6 @@
 # Automate provisioning of AWS Account for ServiceNow Cloud Discovery and IT Operations management with Control Tower lifecycle events
 
-This solution provides an automated approach with integration to [AWS Control Tower](https://aws.amazon.com/controltower/) to automatically configure new AWS accounts created through control tower in ServiceNow for [Cloud Discovery](https://www.servicenow.com/products/cloud-management.html) and [Cloud Management](https://www.servicenow.com/products/cloud-management.html).
+This solution provides an automated approach with integration to [AWS Control Tower](https://aws.amazon.com/controltower/) to automatically configure new AWS accounts created through Control Tower in ServiceNow for [Cloud Discovery](https://www.servicenow.com/products/cloud-management.html) and [Cloud Management](https://www.servicenow.com/products/cloud-management.html).
 
 **Contents:**
 * [Solution Overview](#solution-overview)
