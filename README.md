@@ -89,10 +89,10 @@ In this step you will be creating an AWS CloudFormation stack using the solution
 5. Select  **Choose file** and select the **master-account-setup.yaml** template file from the local folder where you downloaded solution content in Step 2. The **master-account-setup.yaml** is under cloudformation/templates folder.
 6. Choose  **Next**  to continue.
 7. On the Specify Stack Details page, give your stack a name such as &quot;ServiceNowSetupMainStack&quot;. Under Parameters, review the default parameters and enter the values for parameters (pServiceNowUrl, pServiceNowAPIUserName, pServiceNowAPIUserPassword, pSolutionS3Bucket, pOrganizationUnitsToConfigure) based on information gathered in the pre-requisites steps
-8. Ch
+8. On the Configure stack options page you can choose to add tags, choose additional options, or just choose Next.
+9. On the Review page, validate your parameters and acknowledge that IAM resources will be created. Finally, select Create stack.
 
-
-**Step 5)** Launch the AWS CloudFormation stack for integrating AWS Config data with ServiceNow:
+**Step 4)** Launch the AWS CloudFormation stack for integrating AWS Config data with ServiceNow:
 
 AWS Config captures configuration changes to resources in your AWS environment. This data can be sent to ServiceNow to have ServiceNow update the CMDB in real time. In this step we will be deploying a CloudFormation Stack that enables AWS Config events to be sent to ServiceNow. Since AWS Control Tower aggregates AWS Config data in the Audit account we will need to deploy this CloudFormation stack in the Audit account.
 
@@ -100,7 +100,7 @@ AWS Config captures configuration changes to resources in your AWS environment. 
 2. Confirm that your console session is in the same Region as the Amazon S3 bucket in which you stored the code.
 3. Choose Create Stack and select **With new resources (standard)**.
 4. On the Create Stack page, under  **Specify template** , select the  **Upload a template**.
-5. Select  **Choose**** file** and select aws-config-servicenow-integration.yaml.
+5. Select  **Choose file** and select aws-config-servicenow-integration.yaml.
 6. Choose  **Next**  to continue.
 7. On the Specify Stack Details page, give your stack a name such as &quot;AWSConfigServiceNowIntegration&quot;. Under Parameters, review the default parameters and enter the values for parameters (pServiceNowEndpoint, pServiceNowUserName, pServiceNowUserPassword) based on information gathered in the pre-requisites steps
 8. On the Configure stack options page you can choose to add tags, choose additional options, or just choose Next.
