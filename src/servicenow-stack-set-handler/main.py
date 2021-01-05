@@ -65,9 +65,21 @@ except Exception as e:
     traceback.print_exc()
 
 def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+    """
+    Helper function to return response for CloudFormation custom resource
+
+    :param event:
+    :param context
+    :param responseStatus
+    :param responseData
+    :param physicalResourceId
+    :param noEcho
+    :return:
+    """
+
     responseUrl = event['ResponseURL']
 
-    print(responseUrl)
+    logger.debug(responseUrl)
 
     responseBody = {}
     responseBody['Status'] = responseStatus
@@ -81,7 +93,7 @@ def send(event, context, responseStatus, responseData, physicalResourceId=None, 
 
     json_responseBody = json.dumps(responseBody)
 
-    print("Response body:\n" + json_responseBody)
+    logger.debug("Response body:\n" + json_responseBody)
 
     headers = {
         'content-type' : '',
@@ -98,6 +110,9 @@ def send(event, context, responseStatus, responseData, physicalResourceId=None, 
 def get_secret(secret_name):
     """
     Retrieves the specified secret from secrets manager in json string format
+
+    :param secret_name: Secret manager secret
+    :return: Return secret in json format
     """
     region_name = os.environ['StackSetRegions']
 
@@ -149,6 +164,11 @@ def get_secret(secret_name):
 def create_stack_instances(stack_set_name, accounts, regions):
     """
     Creates stack instances for the given stack set in the specified accounts and regions
+
+    :param stack_set_name: Name of CloudFormation StackSet to create/update
+    :param stack_set_accounts: Accounts were stackset instances should be created
+    :param regions: Regions in which stackset instances should be created
+    :return:
     """
     resp = None
 
@@ -183,6 +203,10 @@ def create_stack_instances(stack_set_name, accounts, regions):
 def create_update_stack_set(stack_set_name, stack_set_accounts):
     """
     Creates stack set with the specified accounts
+
+    :param stack_set_name: Name of CloudFormation StackSet to create/update
+    :param stack_set_accounts: Accounts were stackset instances should be created
+    :return:
     """
     try:
         logger.info("Retrieving ServiceNow API credentials from Secret Manager")
@@ -279,6 +303,9 @@ def create_update_stack_set(stack_set_name, stack_set_accounts):
 def delete_stack_set(stack_set_name):
     """
     Deletes stack set and cleans up stack instance
+
+    :param stack_set_name: Name of CloudFormation StackSet to delete
+    :return: None
     """
     resp = None
     stack_set_accounts = []
@@ -335,6 +362,11 @@ def delete_stack_set(stack_set_name):
 def update_lambda_permissions(function_name, account_id, action):
     """
     Updates permissions of lambda function to allow new accounts access to invoke the lambda function
+
+    :param function_name: Name of the function update permissions
+    :param account_id: Account Id to add/update permission for
+    :param action: Permission to add
+    :return:
     """
     resp = None
     logger.info(f"Updating {function_name} Lambda to allow access for account {account_id}")
@@ -352,6 +384,8 @@ def update_lambda_permissions(function_name, account_id, action):
 def retrieve_account_ids_for_organization_unit(ou_id):
     """
     Retrieves active accounts belonging to the specified organizations unit and returns as a list
+
+    :param ou_id: 
     """
     account_ids = []
     paginator = organization_client.get_paginator('list_accounts_for_parent')
@@ -376,9 +410,11 @@ def retrieve_account_ids_for_organization_unit(ou_id):
 
     return account_ids
 
-def retrieve_all_accounts_from_organization(current_account):
+def retrieve_all_accounts_from_organization(master_account):
     """
-    Retrieves all active accounts under the organizations and returns as a list
+    Retrieves all active accounts under the organizations (except parent account) and returns as a list
+
+    :param master_account: Acount Id for master account
     """
     paginator = organization_client.get_paginator('list_accounts')
     page_iterator = paginator.paginate()
@@ -386,19 +422,20 @@ def retrieve_all_accounts_from_organization(current_account):
     for page in page_iterator:
         accounts = page['Accounts']
         for account in accounts:
-            if account['Id'] != current_account and account['Status'] == 'ACTIVE':
+            if account['Id'] != master_account and account['Status'] == 'ACTIVE':
                 account_ids.append(account['Id'])
     return account_ids
 
 
 def lambda_handler(event, context):
-    """The Lambda function handler to process Control tower life cycle event and create/update stackset for ServiceNow
-        for ServiceNow setup. 
-   
-        event: The event passed by Lambda
-        context: The context passed by Lambda
-
     """
+    The Lambda function handler to process Control tower life cycle event and create/update stackset for ServiceNow
+    for ServiceNow setup. 
+   
+    :param event: The event passed by Lambda
+    :param context: The context passed by Lambda
+    """
+
     logger.info(json.dumps(event))
     response_data = {}
     stack_set_accounts = []

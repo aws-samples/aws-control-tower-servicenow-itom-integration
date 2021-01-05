@@ -63,6 +63,11 @@ servicenow_auth = HTTPBasicAuth(creds['username'], creds['password'])
 def servicenow_request(url, request_type, params=None, request_data=None):
     """
     Helper function to make REST API request to ServiceNow and return response in json format
+
+    :param request_type: Type of HTTP request (GET, POST, PUT)
+    :param params: Request parameters
+    :param request_data: Request data
+    :return: Response data from ServiceNow in json format
     """
     logger.debug(f"Request Type: {request_type}")
     logger.debug(f"Request URL: {url}")

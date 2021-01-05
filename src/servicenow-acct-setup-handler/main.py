@@ -40,9 +40,21 @@ discovery_schedule = os.environ['DISCOVERY_SCHEDULE']
 master_acct_user_creds = os.environ['MASTER_ACCOUNT_CREDENTIALS']
 
 def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):
+    """
+    Helper function to return response for CloudFormation custom resource
+
+    :param event:
+    :param context
+    :param responseStatus
+    :param responseData
+    :param physicalResourceId
+    :param noEcho
+    :return:
+    """
+
     responseUrl = event['ResponseURL']
 
-    print(responseUrl)
+    logger.debug(responseUrl)
 
     responseBody = {}
     responseBody['Status'] = responseStatus
@@ -56,7 +68,7 @@ def send(event, context, responseStatus, responseData, physicalResourceId=None, 
 
     json_responseBody = json.dumps(responseBody)
 
-    print("Response body:\n" + json_responseBody)
+    logger.debug("Response body:\n" + json_responseBody)
 
     headers = {
         'content-type' : '',
@@ -71,6 +83,13 @@ def send(event, context, responseStatus, responseData, physicalResourceId=None, 
         print("send(..) failed executing requests.put(..): " + str(e))
                            
 def lambda_handler(event, context):
+    """
+    The Lambda function handler to process Control tower life cycle event and create/update stackset for ServiceNow
+    for ServiceNow setup. 
+   
+    event: The event passed by Lambda
+    context: The context passed by Lambda
+    """
 
     logger.info(json.dumps(event))
     response_data = {}

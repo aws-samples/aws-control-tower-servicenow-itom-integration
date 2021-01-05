@@ -28,7 +28,11 @@ logger.setLevel(logging.INFO)
 def get_secret(secret_name):
     """
     Retrieves the specified secret from secrets manager in json string format
+
+    :param secret_name: Secret manager secret
+    :return: Return secret in json format
     """
+
     # Create a Secrets Manager client
     client = boto3.client('secretsmanager')
 
